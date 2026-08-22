@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YenFind • Yenepoya University Smart Lost & Found Network</title>
+  <meta name="description" content="Official smart Lost and Found network for Yenepoya University. Report lost belongings, claim found items, earn Karma points, and generate zero-storage digital handover certificates." />
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css" />
+  
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+
+  <!-- Background Celebration Canvas for Confetti -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- ========================================================================
+       TOP NAVIGATION BAR
+       ======================================================================== -->
+  <header class="header-glass">
+    <div class="nav-container">
+      <!-- Brand Logo -->
+      <div class="brand-logo" onclick="App.switchTab('feed')">
+        <div class="logo-icon-box">
+          <i class="fa-solid fa-compass"></i>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">YenFind</div>
+          <div class="brand-subtitle">YENEPOYA UNIVERSITY • LOST & FOUND</div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs">
+        <button class="nav-tab-btn active" data-tab="feed">
+          <i class="fa-solid fa-layer-group"></i> Browse Feed
+        </button>
+        <button class="nav-tab-btn" data-tab="leaderboard">
+          <i class="fa-solid fa-trophy"></i> Karma Leaderboard
+        </button>
+        <button class="nav-tab-btn" data-tab="notices">
+          <i class="fa-solid fa-bullhorn"></i> Security Notices
+        </button>
+        <button class="nav-tab-btn" data-tab="guide">
+          <i class="fa-solid fa-book-open"></i> How It Works
+        </button>
+        <button class="nav-tab-btn admin-tab" data-tab="admin">
+          <i class="fa-solid fa-shield-halved"></i> Admin Vault
+        </button>
+      </nav>
+
+      <!-- Action Buttons -->
+      <div class="nav-actions">
+        <button class="btn-post-cta" onclick="App.openPostModal('lost')">
+          <i class="fa-solid fa-plus-circle"></i> Post Item
+        </button>
+        <div class="user-badge-pill" onclick="App.openPostModal('lost')">
+          <div class="user-avatar-small">SK</div>
+          <span style="font-weight: 600;">Sanjeev</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       HERO BANNER & QUICK STATS
+       ======================================================================== -->
+  <section class="hero-section">
+    <div class="hero-banner">
+      <div class="hero-content">
+        <div class="hero-tag">
+          <i class="fa-solid fa-shield-check"></i> Campus Recovery Ecosystem
+        </div>
+        <h1 class="hero-title">
+          Lost Something on Campus? <span>We'll Help You Find It.</span>
+        </h1>
+        <p class="hero-desc">
+          The autonomous peer-to-peer lost & found portal for Yenepoya University. Zero database bloat, client-side verified handover cards, and Karma rewards for honest students.
+        </p>
+
+        <!-- Live Quick Stats -->
+        <div class="hero-stats-row">
+          <div class="hero-stat-item">
+            <div class="stat-num amber" id="statLostCount">0</div>
+            <div class="stat-lbl">Active Lost Items</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="stat-num green" id="statFoundCount">0</div>
+            <div class="stat-lbl">Found & Safe</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="stat-num purple" id="statResolvedCount">0</div>
+            <div class="stat-lbl">Successfully Returned</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-cta-group">
+        <button class="btn-hero-action lost" onclick="App.openPostModal('lost')">
+          <i class="fa-solid fa-magnifying-glass"></i> I Lost Something
+        </button>
+        <button class="btn-hero-action found" onclick="App.openPostModal('found')">
+          <i class="fa-solid fa-hand-holding-heart"></i> I Found Something
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       CAMPUS HOTSPOT ZONES SELECTOR
+       ======================================================================== -->
+  <div class="zones-bar-wrapper">
+    <div class="zones-header-title">
+      <i class="fa-solid fa-location-crosshairs"></i> Quick Filter by Campus Zone:
+    </div>
+    <div class="zones-scroll-row">
+      <button class="zone-chip active" data-zone="all">
+        <i class="fa-solid fa-globe"></i> All Campus Zones
+      </button>
+      <button class="zone-chip" data-zone="Central Library">
+        <i class="fa-solid fa-book"></i> Central Library
+      </button>
+      <button class="zone-chip" data-zone="Campus Canteen">
+        <i class="fa-solid fa-utensils"></i> Food Court / Canteen
+      </button>
+      <button class="zone-chip" data-zone="Lecture Hall Complex">
+        <i class="fa-solid fa-chalkboard-user"></i> Lecture Hall Complex
+      </button>
+      <button class="zone-chip" data-zone="Sports Arena">
+        <i class="fa-solid fa-volleyball"></i> Sports Arena
+      </button>
+      <button class="zone-chip" data-zone="Medical Sciences Block">
+        <i class="fa-solid fa-hospital"></i> Medical Sciences Block
+      </button>
+      <button class="zone-chip" data-zone="Hostel">
+        <i class="fa-solid fa-hotel"></i> Campus Hostels
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MAIN CONTAINER / TAB PAGES
+       ======================================================================== -->
+  <main class="main-container">
+
+    <!-- ====================================================================
+         TAB 1: LIVE FEED & FLIPKART-STYLE FILTERS
+         ==================================================================== -->
+    <div class="tab-page-view active" id="tab-feed">
+      <div class="feed-layout">
+        
+        <!-- Sidebar Filters (Flipkart-Style) -->
+        <aside class="filter-sidebar">
+          <div class="filter-title-row">
+            <div class="filter-heading">
+              <i class="fa-solid fa-sliders"></i> Filters
+            </div>
+            <button class="btn-reset-filters" id="btnResetFilters">Reset All</button>
+          </div>
+
+          <!-- Category Filter Group -->
+          <div class="filter-group">
+            <div class="filter-group-title">Item Categories</div>
+            <div class="filter-checkbox-list">
+              <label class="filter-label">
+                <input type="checkbox" class="category-filter-checkbox" value="Electronics" />
+                <span>📱 Electronics & Gadgets</span>
+              </label>
+              <label class="filter-label">
+                <input type="checkbox" class="category-filter-checkbox" value="Cards & IDs" />
+                <span>🪪 IDs & Cards</span>
+              </label>
+              <label class="filter-label">
+                <input type="checkbox" class="category-filter-checkbox" value="Stationery & Books" />
+                <span>📚 Books & Stationery</span>
+              </label>
+              <label class="filter-label">
+                <input type="checkbox" class="category-filter-checkbox" value="Bags & Luggage" />
+                <span>🎒 Bags & Luggage</span>
+              </label>
+              <label class="filter-label">
+                <input type="checkbox" class="category-filter-checkbox" value="Clothing & Accessories" />
+                <span>🧥 Clothing & Wearables</span>
+              </label>
+              <label class="filter-label">
+                <input type="checkbox" class="category-filter-checkbox" value="Keys & Wallets" />
+                <span>🔑 Keys & Wallets</span>
+              </label>
+              <label class="filter-label">
+                <input type="checkbox" class="category-filter-checkbox" value="Other" />
+                <span>📦 Other Belongings</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Status Filter -->
+          <div class="filter-group">
+            <div class="filter-group-title">Resolution Status</div>
+            <div class="filter-checkbox-list">
+              <label class="filter-label">
+                <input type="radio" name="statusRadio" value="all" checked onchange="App.activeStatusFilter='all'; App.renderFeed();" />
+                <span>All Active Listings</span>
+              </label>
+              <label class="filter-label">
+                <input type="radio" name="statusRadio" value="lost" onchange="App.activeStatusFilter='lost'; App.renderFeed();" />
+                <span>🔴 Lost by Students</span>
+              </label>
+              <label class="filter-label">
+                <input type="radio" name="statusRadio" value="found" onchange="App.activeStatusFilter='found'; App.renderFeed();" />
+                <span>🟢 Found by Good Samaritans</span>
+              </label>
+              <label class="filter-label">
+                <input type="radio" name="statusRadio" value="admin" onchange="App.activeStatusFilter='admin'; App.renderFeed();" />
+                <span>🏢 Deposited at Security Desk</span>
+              </label>
+              <label class="filter-label">
+                <input type="radio" name="statusRadio" value="resolved" onchange="App.activeStatusFilter='resolved'; App.renderFeed();" />
+                <span>📜 Handed Over & Resolved</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Auto-Cleanup Notice Box -->
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.85rem; border-radius: var(--radius-md); font-size: 0.78rem; color: var(--text-secondary); margin-top: 1.5rem;">
+            <strong style="color: #34d399; display: block; margin-bottom: 0.25rem;">
+              ⚡ 7-Day Auto-Cleanup Policy
+            </strong>
+            To protect student privacy and minimize storage overhead, resolved handover records are automatically pruned after 7 days. Download your digital certificate upon claim!
+          </div>
+        </aside>
+
+        <!-- Right Side: Search, Segmented Control & Cards Grid -->
+        <section class="feed-content-area">
+          <div class="feed-controls-row">
+            <div class="search-input-box">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="feedSearchInput" placeholder="Search AirPods, ID Card, Casio Calculator, Library..." />
+            </div>
+
+            <div class="status-segmented-control">
+              <button class="status-seg-btn active" data-status="all">All Items</button>
+              <button class="status-seg-btn lost" data-status="lost">🔴 Lost</button>
+              <button class="status-seg-btn found" data-status="found">🟢 Found</button>
+              <button class="status-seg-btn" data-status="admin">🏢 Security Desk</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Items Grid -->
+          <div class="items-grid" id="itemsFeedGrid">
+            <!-- Rendered dynamically by app.js -->
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         TAB 2: KARMA LEADERBOARD & HALL OF FAME
+         ==================================================================== -->
+    <div class="tab-page-view" id="tab-leaderboard">
+      <div class="leaderboard-container">
+        
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <h2 style="font-size: 2.2rem; margin-bottom: 0.5rem;">🏆 Campus Karma Hall of Fame</h2>
+          <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto;">
+            Celebrating Yenepoya students who step up to return lost belongings. Earn +100 Karma points for every verified handover and +50 points for social sharing!
+          </p>
+        </div>
+
+        <!-- Top 3 Podium -->
+        <div class="podium-row" id="leaderboardPodium">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+
+        <!-- Leaderboard Table -->
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th style="width: 80px;">Rank</th>
+              <th>Student</th>
+              <th>Karma Badge</th>
+              <th>Returns</th>
+              <th>Karma Points</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardTableBody">
+            <!-- Rendered dynamically by app.js -->
+          </tbody>
+        </table>
+
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         TAB 3: CAMPUS SECURITY NOTICE BOARD
+         ==================================================================== -->
+    <div class="tab-page-view" id="tab-notices">
+      <div class="guide-container">
+        
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <h2 style="font-size: 2.2rem; margin-bottom: 0.5rem;">📢 Campus Security Notice Board</h2>
+          <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto;">
+            Official announcements, high-value item deposits, and administrative updates from the Yenepoya Campus Security Desk and Registrar.
+          </p>
+        </div>
+
+        <div class="notices-grid" id="noticesFeedGrid">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         TAB 4: INTERACTIVE "HOW IT WORKS" VISUAL GUIDE
+         ==================================================================== -->
+    <div class="tab-page-view" id="tab-guide">
+      <div class="guide-container">
+        
+        <div style="text-align: center; margin-bottom: 2.5rem;">
+          <h2 style="font-size: 2.2rem; margin-bottom: 0.5rem;">📖 How YenFind Works</h2>
+          <p style="color: var(--text-secondary); max-width: 650px; margin: 0 auto;">
+            A simple, secure, and privacy-preserving workflow designed specifically for Yenepoya University students and administration.
+          </p>
+        </div>
+
+        <!-- Student Flow Steps -->
+        <h3 style="color: #34d399; font-size: 1.3rem; margin-bottom: 1rem;">
+          🎓 For Students & Finders
+        </h3>
+        <div class="guide-step-grid">
+          <div class="guide-step-card">
+            <div class="guide-step-num">01</div>
+            <div style="font-size: 2rem; margin-bottom: 0.75rem;">📝</div>
+            <h4 style="font-size: 1.15rem; margin-bottom: 0.4rem;">Post Lost / Found</h4>
+            <p style="color: var(--text-secondary); font-size: 0.88rem;">
+              Fill in what you lost or found with campus zone and an optional reference photo. Our <strong>Smart Match Radar</strong> automatically alerts you if a matching item is already posted.
+            </p>
+          </div>
+
+          <div class="guide-step-card">
+            <div class="guide-step-num">02</div>
+            <div style="font-size: 2rem; margin-bottom: 0.75rem;">💬</div>
+            <h4 style="font-size: 1.15rem; margin-bottom: 0.4rem;">Connect & Bystander Tips</h4>
+            <p style="color: var(--text-secondary); font-size: 0.88rem;">
+              Finders and owners connect privately to verify unique identifying details. Anyone who spotted the item on campus can drop a fast, anonymous <strong>Bystander Tip</strong>.
+            </p>
+          </div>
+
+          <div class="guide-step-card">
+            <div class="guide-step-num">03</div>
+            <div style="font-size: 2rem; margin-bottom: 0.75rem;">📜</div>
+            <h4 style="font-size: 1.15rem; margin-bottom: 0.4rem;">Instant Verified Certificate</h4>
+            <p style="color: var(--text-secondary); font-size: 0.88rem;">
+              Upon meeting and handing over, tap <strong>Complete Handover</strong>. The app generates a 2x Retina Official Handover Receipt on your device with QR code & timestamps. 0 server cost!
+            </p>
+          </div>
+        </div>
+
+        <!-- Administrator Flow Steps -->
+        <h3 style="color: #a78bfa; font-size: 1.3rem; margin: 3rem 0 1rem;">
+          🛡️ For Campus Administrators & Security
+        </h3>
+        <div class="guide-step-grid">
+          <div class="guide-step-card">
+            <div class="guide-step-num">01</div>
+            <div style="font-size: 2rem; margin-bottom: 0.75rem;">📁</div>
+            <h4 style="font-size: 1.15rem; margin-bottom: 0.4rem;">Roster Import & Mode Toggle</h4>
+            <p style="color: var(--text-secondary); font-size: 0.88rem;">
+              Import student CSV rosters in seconds. Choose between <strong>Strict University Verification</strong> (validates college email) or <strong>Open Campus Mode</strong> (easy access).
+            </p>
+          </div>
+
+          <div class="guide-step-card">
+            <div class="guide-step-num">02</div>
+            <div style="font-size: 2rem; margin-bottom: 0.75rem;">📌</div>
+            <h4 style="font-size: 1.15rem; margin-bottom: 0.4rem;">Broadcast Security Notices</h4>
+            <p style="color: var(--text-secondary); font-size: 0.88rem;">
+              Post pinned alerts for high-value items (laptops, wallets, keys) held at the Central Security Office with clear claim guidelines.
+            </p>
+          </div>
+
+          <div class="guide-step-card">
+            <div class="guide-step-num">03</div>
+            <div style="font-size: 2rem; margin-bottom: 0.75rem;">💾</div>
+            <h4 style="font-size: 1.15rem; margin-bottom: 0.4rem;">CSV Backup & Semester Wipe</h4>
+            <p style="color: var(--text-secondary); font-size: 0.88rem;">
+              At the end of each semester, export full resolution archives with 1 click to CSV for official university records, then execute a clean semester reset.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         TAB 5: ADMIN SECURITY VAULT
+         ==================================================================== -->
+    <div class="tab-page-view" id="tab-admin">
+      <div class="admin-vault-container">
+        
+        <!-- Screen 1: Admin PIN Authentication -->
+        <div id="adminAuthScreen" style="max-width: 420px; margin: 3rem auto; background: var(--bg-surface); padding: 2.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-glass); text-align: center;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(139, 92, 246, 0.2); color: #a78bfa; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
+            <i class="fa-solid fa-lock"></i>
+          </div>
+          <h2 style="font-size: 1.5rem; margin-bottom: 0.4rem;">Administrator Portal</h2>
+          <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">
+            Enter the Yenepoya Campus Security PIN to access student roster and semester controls.
+          </p>
+
+          <form id="adminPinForm">
+            <div class="form-group">
+              <input type="password" id="adminPinInput" class="form-input" placeholder="Enter Admin PIN (Default: 1234)" style="text-align: center; font-size: 1.2rem; letter-spacing: 4px;" required />
+            </div>
+            <button type="submit" class="btn-card-action primary-claim" style="width: 100%; padding: 0.8rem; font-size: 0.95rem;">
+              <i class="fa-solid fa-key"></i> Unlock Admin Vault
+            </button>
+          </form>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem;">
+            Demo Hackathon PIN: <code>1234</code>
+          </div>
+        </div>
+
+        <!-- Screen 2: Admin Dashboard -->
+        <div id="adminDashboardScreen" style="display: none;">
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h2 style="font-size: 2rem; display: flex; align-items: center; gap: 0.6rem;">
+                <i class="fa-solid fa-shield-halved" style="color: #a78bfa;"></i> Campus Admin Dashboard
+              </h2>
+              <p style="color: var(--text-secondary);">Yenepoya University Lost & Found Central Security Node</p>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+              <button class="btn-card-action secondary-tip" onclick="App.restoreDemoData()">
+                <i class="fa-solid fa-arrows-rotate"></i> Restore Demo Data
+              </button>
+              <button class="btn-card-action secondary-tip" style="color: #f43f5e;" onclick="App.logoutAdmin()">
+                <i class="fa-solid fa-right-from-bracket"></i> Lock Vault
+              </button>
+            </div>
+          </div>
+
+          <!-- Admin Action Grid Cards -->
+          <div class="admin-grid-cards">
+            
+            <!-- Card 1: Student Roster CSV Import -->
+            <div class="admin-action-card">
+              <div>
+                <div class="admin-card-title">
+                  <i class="fa-solid fa-file-csv" style="color: #38bdf8;"></i> Student Roster (CSV)
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.25rem;">
+                  Upload university student roster with columns: <code>name, email, roll_no, department</code>.
+                </p>
+              </div>
+
+              <div>
+                <label class="btn-card-action primary-claim" style="cursor: pointer; width: 100%; text-align: center;">
+                  <i class="fa-solid fa-upload"></i> Upload Roster CSV
+                  <input type="file" id="rosterCsvUpload" accept=".csv" style="display: none;" />
+                </label>
+              </div>
+            </div>
+
+            <!-- Card 2: Authentication Mode Toggle -->
+            <div class="admin-action-card">
+              <div>
+                <div class="admin-card-title">
+                  <i class="fa-solid fa-user-check" style="color: #34d399;"></i> Verification Access Policy
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.25rem;">
+                  Toggle whether student emails must strictly match the uploaded CSV roster or allow open guest access.
+                </p>
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.3); padding: 0.75rem 1rem; border-radius: var(--radius-md);">
+                <span style="font-size: 0.88rem; font-weight: 600;">Strict Roster Check</span>
+                <input type="checkbox" id="toggleStrictRoster" style="width: 20px; height: 20px; accent-color: var(--primary); cursor: pointer;" onchange="App.toggleStrictRosterMode()" />
+              </div>
+            </div>
+
+            <!-- Card 3: Semester CSV Export & Wipe -->
+            <div class="admin-action-card danger">
+              <div>
+                <div class="admin-card-title" style="color: #f43f5e;">
+                  <i class="fa-solid fa-database"></i> Semester Archival & Reset
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.25rem;">
+                  Download complete semester records as CSV for university records, then safely wipe data for the next term.
+                </p>
+              </div>
+
+              <div style="display: flex; gap: 0.6rem;">
+                <button class="btn-card-action secondary-tip" onclick="App.exportSemesterCSV()">
+                  <i class="fa-solid fa-download"></i> Export CSV
+                </button>
+                <button class="btn-card-action" style="background: rgba(244, 63, 94, 0.2); color: #fda4af; border: 1px solid rgba(244,63,94,0.4);" onclick="App.confirmSemesterReset()">
+                  <i class="fa-solid fa-trash-can"></i> Semester Wipe
+                </button>
+              </div>
+            </div>
+
+            <!-- Card 4: Post Campus Notice -->
+            <div class="admin-action-card" style="grid-column: 1 / -1;">
+              <div class="admin-card-title">
+                <i class="fa-solid fa-bullhorn" style="color: #fbbf24;"></i> Post Official Campus Notice
+              </div>
+              <form id="postNoticeForm" style="margin-top: 1rem;">
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">Notice Title</label>
+                    <input type="text" id="noticeTitleInput" class="form-input" placeholder="e.g. Unclaimed Smartwatches at Security Room 101" required />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Notice Badge / Category</label>
+                    <select id="noticeBadgeInput" class="form-select">
+                      <option value="OFFICIAL SECURITY">OFFICIAL SECURITY</option>
+                      <option value="CAMPUS ALERT">CAMPUS ALERT</option>
+                      <option value="ACADEMIC DESK">ACADEMIC DESK</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">Author Name / Department</label>
+                    <input type="text" id="noticeAuthorInput" class="form-input" value="Chief Security Officer, Yenepoya Campus" required />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Notice Announcement Details</label>
+                    <input type="text" id="noticeContentInput" class="form-input" placeholder="Details of items and instructions to claim..." required />
+                  </div>
+                </div>
+                <button type="submit" class="btn-card-action primary-claim" style="width: 220px; padding: 0.65rem;">
+                  <i class="fa-solid fa-paper-plane"></i> Publish Notice
+                </button>
+              </form>
+            </div>
+
+            <!-- Card 5: Cloud Firebase Adapter Slot -->
+            <div class="admin-action-card cloud" style="grid-column: 1 / -1;">
+              <div class="admin-card-title" style="color: #38bdf8;">
+                <i class="fa-solid fa-cloud"></i> Cloud Database Connection (Firebase / Google Cloud Run)
+              </div>
+              <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.75rem;">
+                The application is architected with a modular <code>dbService.js</code>. For post-hackathon campus deployment across multiple campuses, you can plug in Firebase Firestore or Cloud SQL directly.
+              </p>
+              <div style="background: rgba(0,0,0,0.4); padding: 0.75rem 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.78rem; color: #a7f3d0;">
+                // Ready for Google Cloud Run / Firebase Firestore<br />
+                const firebaseConfig = { projectId: "yenepoya-lostfound", storageBucket: "yenfind.appspot.com" };
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Roster Preview Table -->
+          <div style="background: var(--bg-surface); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 1.5rem; margin-top: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h3 style="font-size: 1.15rem;">Active Semester Student Roster</h3>
+              <span class="badge-tag-type found" id="rosterCountBadge">0 Students</span>
+            </div>
+            <table class="leaderboard-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th>Student Name</th>
+                  <th>University Email</th>
+                  <th>Roll Number</th>
+                  <th>Department</th>
+                </tr>
+              </thead>
+              <tbody id="rosterTablePreviewBody">
+                <!-- Rendered by app.js -->
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================================================
+       MODAL 1: POST LOST / FOUND ITEM
+       ======================================================================== -->
+  <div class="modal-overlay" id="postItemModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <i class="fa-solid fa-circle-plus" style="color: var(--primary);"></i> Report Campus Item
+        </h3>
+        <button class="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <form id="postItemForm">
+          <!-- Smart Match Radar Alert Box -->
+          <div class="match-radar-card" id="smartMatchRadarBox">
+            <div class="match-radar-header">
+              <i class="fa-solid fa-satellite-dish"></i> Smart Match Radar
+            </div>
+            <div class="match-radar-text" id="smartMatchRadarText">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Report Type</label>
+              <select id="postItemType" class="form-select" onchange="App.checkSmartMatchRadar()">
+                <option value="lost">🔴 I Lost an Item</option>
+                <option value="found">🟢 I Found an Item</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <select id="postItemCategory" class="form-select" required>
+                <option value="Electronics">📱 Electronics & Gadgets</option>
+                <option value="Cards & IDs">🪪 IDs & Cards</option>
+                <option value="Stationery & Books">📚 Books & Stationery</option>
+                <option value="Bags & Luggage">🎒 Bags & Luggage</option>
+                <option value="Clothing & Accessories">🧥 Clothing & Wearables</option>
+                <option value="Keys & Wallets">🔑 Keys & Wallets</option>
+                <option value="Other">📦 Other Belongings</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Item Title / Name</label>
+            <input type="text" id="postItemTitle" class="form-input" placeholder="e.g. Apple AirPods Pro with Clear Case" required />
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Campus Zone</label>
+              <select id="postItemZone" class="form-select" required>
+                <option value="Central Library">Central Library</option>
+                <option value="Campus Canteen">Campus Canteen / Food Court</option>
+                <option value="Lecture Hall Complex">Lecture Hall Complex</option>
+                <option value="Sports Arena">Sports Arena</option>
+                <option value="Medical Sciences Block">Medical Sciences Block</option>
+                <option value="Hostel Block A">Hostel Block A</option>
+                <option value="Hostel Block B">Hostel Block B</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Specific Location / Desk</label>
+              <input type="text" id="postItemLocation" class="form-input" placeholder="e.g. 2nd Floor Study Desk #14" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description & Distinguishing Features</label>
+            <textarea id="postItemDesc" class="form-textarea" rows="3" placeholder="Describe color, serial marks, scratches, or stickers..." required></textarea>
+          </div>
+
+          <!-- Photo Upload (Optional) -->
+          <div class="form-group">
+            <label class="form-label">Reference Photo (Optional)</label>
+            <label class="image-upload-dropzone" for="itemImageInput">
+              <i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.5rem; color: var(--primary); margin-bottom: 0.35rem; display: block;"></i>
+              <span style="font-size: 0.85rem; color: var(--text-secondary);">Click to upload item photo (JPEG/PNG)</span>
+              <input type="file" id="itemImageInput" accept="image/*" style="display: none;" />
+            </label>
+            <div class="preview-thumb-container" id="imagePreviewContainer">
+              <img id="imagePreviewThumb" src="" alt="Preview" />
+            </div>
+          </div>
+
+          <!-- Reporter Credentials -->
+          <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: var(--radius-md); margin-top: 1rem;">
+            <div style="font-size: 0.82rem; font-weight: 700; color: #38bdf8; margin-bottom: 0.75rem; text-transform: uppercase;">
+              👤 Your Student Contact Credentials
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" id="reporterName" class="form-input" value="Sanjeev Karthikeya" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">University Email</label>
+                <input type="email" id="reporterEmail" class="form-input" value="sanjeev.k@yenepoya.edu.in" required />
+              </div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Roll / Student ID</label>
+                <input type="text" id="reporterRoll" class="form-input" value="YEN24EC012" required />
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Phone Number</label>
+                <input type="tel" id="reporterPhone" class="form-input" value="+91 99887 76655" required />
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer-actions">
+            <button type="button" class="btn-card-action secondary-tip" onclick="App.closeAllModals()">Cancel</button>
+            <button type="submit" class="btn-card-action primary-claim" style="padding: 0.7rem 1.5rem;">
+              <i class="fa-solid fa-paper-plane"></i> Publish Item Listing
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 2: CONNECT, PRIVATE INQUIRY & RESOLVE HANDOVER
+       ======================================================================== -->
+  <div class="modal-overlay" id="connectModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <i class="fa-solid fa-handshake-angle" style="color: var(--primary);"></i> In-App Connect & Handover
+        </h3>
+        <button class="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-glass); margin-bottom: 1.25rem;">
+          <h4 id="connectModalItemTitle" style="font-size: 1.15rem; color: #fff; margin-bottom: 0.25rem;">Item Title</h4>
+          <div id="connectModalItemMeta" style="font-size: 0.8rem; color: var(--primary-light); margin-bottom: 0.5rem;">Meta</div>
+          <p id="connectModalItemDesc" style="font-size: 0.85rem; color: var(--text-secondary);">Description</p>
+        </div>
+
+        <!-- Section 1: In-App Private Chat / Verification Messages -->
+        <div style="background: rgba(0,0,0,0.35); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.25rem; border: 1px solid var(--border-glass);">
+          <div style="font-size: 0.85rem; font-weight: 700; color: #38bdf8; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+            <i class="fa-solid fa-comments"></i> In-App Private Verification Messages
+          </div>
+          <div id="connectModalMessagesList" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.75rem;">
+            <!-- Rendered dynamically -->
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="privateMsgInput" class="form-input" placeholder="Type a message (e.g. 'What color is the sticker on the back?')..." style="padding: 0.5rem 0.85rem; font-size: 0.85rem;" />
+            <button type="button" class="btn-card-action primary-claim" style="flex: 0 0 80px; padding: 0.5rem;" onclick="App.sendPrivateInquiryMessage()">
+              Send
+            </button>
+          </div>
+        </div>
+
+        <!-- Section 2: Bystander Tips List -->
+        <div id="connectModalTipsList" style="margin-bottom: 1.25rem;"></div>
+
+        <!-- Section 3: Handover Authentication Form -->
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); padding: 1.25rem; border-radius: var(--radius-md);">
+          <div style="font-weight: 700; color: #34d399; font-size: 0.9rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+            <i class="fa-solid fa-award"></i> Authenticate Custody Handover
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            Completing handover will issue an official client-side Digital Certificate and award +100 Karma points to the finder.
+          </p>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Finder's Name</label>
+              <input type="text" id="handoverFinderName" class="form-input" placeholder="Student who found item" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Finder's Roll No</label>
+              <input type="text" id="handoverFinderRoll" class="form-input" placeholder="e.g. YEN23ME045" required />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Owner's Name</label>
+              <input type="text" id="handoverOwnerName" class="form-input" placeholder="Student receiving item" required />
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Owner's Roll No</label>
+              <input type="text" id="handoverOwnerRoll" class="form-input" placeholder="e.g. YEN24EC012" required />
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer-actions">
+          <button type="button" class="btn-card-action secondary-tip" onclick="App.closeAllModals()">Close</button>
+          <button type="button" class="btn-card-action primary-claim" style="padding: 0.75rem 1.5rem;" onclick="App.executeHandover()">
+            <i class="fa-solid fa-file-shield"></i> Confirm Handover & Download Receipt
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 3: BYSTANDER TIP (Person 3)
+       ======================================================================== -->
+  <div class="modal-overlay" id="tipModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <i class="fa-solid fa-lightbulb" style="color: #fbbf24;"></i> Drop a Bystander Tip
+        </h3>
+        <button class="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <h4 id="tipModalItemTitle" style="font-size: 1rem; color: #fff; margin-bottom: 1rem;">Item</h4>
+        
+        <div class="form-group">
+          <label class="form-label">Your Name (Optional / Anonymous)</label>
+          <input type="text" id="tipAuthorName" class="form-input" placeholder="e.g. Canteen Bystander or Student" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Where or when did you spot this item?</label>
+          <textarea id="tipMessageInput" class="form-textarea" rows="3" placeholder="e.g. Saw this near the 2nd-floor water cooler around 3:30 PM..." required></textarea>
+        </div>
+
+        <div class="modal-footer-actions">
+          <button type="button" class="btn-card-action secondary-tip" onclick="App.closeAllModals()">Cancel</button>
+          <button type="button" class="btn-card-action primary-claim" onclick="App.submitBystanderTip()">
+            <i class="fa-solid fa-paper-plane"></i> Submit Tip
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 4: HANDOVER CERTIFICATE DOWNLOAD & SOCIAL BONUS
+       ======================================================================== -->
+  <div class="modal-overlay" id="certificateModal">
+    <div class="modal-dialog" style="max-width: 780px;">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <i class="fa-solid fa-certificate" style="color: #fbbf24;"></i> Official Handover Certificate
+        </h3>
+        <button class="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <div id="certModalSerial" style="font-family: var(--font-mono); font-size: 0.85rem; color: #34d399; margin-bottom: 0.75rem;">
+          Serial ID: CERT-YEN-000000
+        </div>
+
+        <!-- Canvas Generated Image Preview -->
+        <div class="cert-preview-container">
+          <img id="certPreviewImg" src="" alt="Official Certificate Preview" />
+        </div>
+
+        <div style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; background: rgba(0,0,0,0.3); padding: 1rem; border-radius: var(--radius-md);">
+          <div>
+            <div style="font-weight: 700; font-size: 0.9rem; color: #fff;">
+              🎉 Handover Recorded Successfully!
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-secondary);">
+              Receipt automatically downloaded to your device as PNG for safety.
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn-card-action secondary-tip" onclick="certGenerator.downloadAsPNG()">
+              <i class="fa-solid fa-download"></i> Re-download PNG
+            </button>
+            <button class="btn-card-action" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;" onclick="App.claimSocialBonus()">
+              <i class="fa-solid fa-share-nodes"></i> Share & Claim +50 Karma
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 5: QUICK STUDENT PROFILE SWITCHER (For Live Demo)
+       ======================================================================== -->
+  <div class="modal-overlay" id="studentProfileModal">
+    <div class="modal-dialog" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <i class="fa-solid fa-user-gear" style="color: var(--primary);"></i> Switch Active Student Persona
+        </h3>
+        <button class="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+          Quickly switch personas during your live presentation to demonstrate how different students report, find, message, and claim items.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;" id="personaListContainer">
+          <!-- Populated dynamically -->
+        </div>
+
+        <form id="customStudentLoginForm" style="border-top: 1px solid var(--border-glass); padding-top: 1.25rem;">
+          <div style="font-size: 0.85rem; font-weight: 700; color: #38bdf8; margin-bottom: 0.75rem;">
+            Or Enter Custom Student Credentials:
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input type="text" id="customStudentName" class="form-input" placeholder="Your Name" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Roll Number</label>
+              <input type="text" id="customStudentRoll" class="form-input" placeholder="e.g. YEN25CS101" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">University Email</label>
+            <input type="email" id="customStudentEmail" class="form-input" placeholder="student@yenepoya.edu.in" required />
+          </div>
+          <button type="submit" class="btn-card-action primary-claim" style="width: 100%; padding: 0.7rem;">
+            <i class="fa-solid fa-right-to-bracket"></i> Set Active Student
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 6: ITEM DETAIL INSPECTOR
+       ======================================================================== -->
+  <div class="modal-overlay" id="itemDetailModal">
+    <div class="modal-dialog" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="itemDetailTitle">
+          Item Details
+        </h3>
+        <button class="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-body" id="itemDetailContent">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       SIGNATURE FOOTER (Vibe Coded by Sanjeev Karthikeya)
+       ======================================================================== -->
+  <footer class="signature-footer">
+    <div class="footer-inner">
+      <div class="footer-brand-row">
+        <div class="logo-icon-box" style="width: 32px; height: 32px; font-size: 1rem;">
+          <i class="fa-solid fa-compass"></i>
+        </div>
+        <div style="font-family: var(--font-heading); font-weight: 800; font-size: 1.15rem; color: #fff;">
+          YenFind • Yenepoya University
+        </div>
+      </div>
+
+      <!-- Sanjeev Karthikeya Signature Branding & Instagram Link -->
+      <a href="https://www.instagram.com/ask_invictus?igsi=MTZhd3dsODE3aWQ=" target="_blank" rel="noopener noreferrer" class="footer-credits-box" title="View Sanjeev Karthikeya on Instagram">
+        <div class="invictus-logo-badge-img">
+          <img src="ask_invictus_logo.jpg" alt="ASK Invictus Logo" />
+        </div>
+        <div style="text-align: left;">
+          <div class="vibe-coded-text">
+            ✨ Vibe coded by <span>SANJEEV KARTHIKEYA</span>
+          </div>
+          <div class="instagram-subtag">
+            <i class="fa-brands fa-instagram"></i> @ask_invictus • Tap to Connect
+          </div>
+        </div>
+      </a>
+
+      <div class="footer-copyright">
+        &copy; 2026 Yenepoya University Autonomous Recovery Portal • Built with Google Antigravity & Antigravity IDE
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts in proper dependency order -->
+  <script src="mockData.js"></script>
+  <script src="dbService.js"></script>
+  <script src="cardGenerator.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
