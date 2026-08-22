@@ -2,10 +2,10 @@
   "name": "yenfind-lost-and-found",
   "version": "1.0.0",
   "description": "Yenepoya University Smart Lost and Found Network - Vibe Coded by Sanjeev Karthikeya",
-  "main": "server.js",
+  "private": true,
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node scripts/dev-server.js",
+    "start": "node scripts/dev-server.js"
   },
   "dependencies": {},
   "engines": {

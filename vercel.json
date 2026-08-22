@@ -1,10 +1,5 @@
 {
-  "version": 2,
-  "name": "yenfind-lost-and-found",
   "cleanUrls": true,
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
   "headers": [
     {
       "source": "/(.*)",

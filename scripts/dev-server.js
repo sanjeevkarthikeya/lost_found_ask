@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 3000;
+const ROOT_DIR = path.resolve(__dirname, '..');
 
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -24,8 +25,14 @@ const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   let reqPath = req.url === '/' ? '/index.html' : req.url.split('?')[0];
-  let filePath = path.join(__dirname, reqPath);
+  let filePath = path.join(ROOT_DIR, reqPath);
   let extname = path.extname(filePath).toLowerCase();
   let contentType = MIME_TYPES[extname] || 'application/octet-stream';
 
@@ -33,7 +40,7 @@ const server = http.createServer((req, res) => {
     if (err) {
       if (err.code === 'ENOENT') {
         // Fallback to index.html for SPA routing
-        fs.readFile(path.join(__dirname, 'index.html'), (error, indexContent) => {
+        fs.readFile(path.join(ROOT_DIR, 'index.html'), (error, indexContent) => {
           if (error) {
             res.writeHead(500);
             res.end(`Error loading index.html: ${error.code}`);
@@ -53,9 +60,13 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`=======================================================`);
-  console.log(`🚀 YenFind Server is live at http://localhost:${PORT}`);
-  console.log(`✨ Vibe Coded by Sanjeev Karthikeya (@ask_invictus)`);
-  console.log(`=======================================================`);
-});
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`=======================================================`);
+    console.log(`🚀 YenFind Dev Server is live at http://localhost:${PORT}`);
+    console.log(`✨ Vibe Coded by Sanjeev Karthikeya (@ask_invictus)`);
+    console.log(`=======================================================`);
+  });
+}
+
+module.exports = server;
