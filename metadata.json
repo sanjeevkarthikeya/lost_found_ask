@@ -1,0 +1,6 @@
+{
+  "name": "YenFind",
+  "description": "Campus Lost & Found platform for Yenepoya University with real-time matching, private messaging, Flipkart-style filters, acknowledgment card generator, student leaderboard, and admin portal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
